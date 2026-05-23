@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления недвижимостью</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --secondary: #34495e; --accent: #3498db;
+            --light: #ecf0f1; --danger: #e74c3c; --success: #2ecc71; --warning: #f39c12;
+        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f4f7f6; color: #333; }
+        nav { background-color: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        nav h1 { margin: 0; font-size: 1.5rem; }
+        .nav-links button { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; margin-left: 20px; padding-bottom: 5px; }
+        .nav-links button:hover, .nav-links button.active { border-bottom: 2px solid var(--accent); color: var(--accent); }
+        .container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--light); color: var(--secondary); }
+        tr:hover { background-color: #f9f9f9; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .btn-primary { background-color: var(--accent); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-link { background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+
+        /* Бейджи */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; color: white; }
+        .badge-success { background-color: var(--success); }
+        .badge-danger { background-color: var(--danger); }
+        .badge-warning { background-color: var(--warning); }
+
+        /* Модальное окно */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 450px; max-width: 90%; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+        /* Экран входа */
+        .auth-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; text-align: center; }
+        #auth-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); }
+        .auth-toggle { margin-top: 15px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН ВХОДА -->
+    <div id="auth-screen">
+        <div id="login-form" class="auth-box">
+            <h2>Вход</h2>
+            <div class="form-group"><input type="text" id="login-username" placeholder="Логин"></div>
+            <div class="form-group"><input type="password" id="login-password" placeholder="Пароль"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="login()">Войти</button>
+            <div class="auth-toggle">Нет аккаунта? <button class="btn-link" onclick="showRegister()">Зарегистрироваться</button></div>
+            <p id="login-error" style="color:red; margin-top:10px; font-size: 0.8rem;"></p>
+        </div>
+
+        <div id="register-form" class="auth-box" style="display:none;">
+            <h2>Регистрация</h2>
+            <div class="form-group"><input type="text" id="reg-username" placeholder="Логин"></div>
+            <div class="form-group"><input type="email" id="reg-email" placeholder="Email"></div>
+            <div class="form-group"><input type="password" id="reg-password" placeholder="Пароль"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="register()">Создать аккаунт</button>
+            <div class="auth-toggle">Есть аккаунт? <button class="btn-link" onclick="showLogin()">Войти</button></div>
+            <p id="reg-error" style="color:red; margin-top:10px; font-size: 0.8rem;"></p>
+        </div>
+    </div>
+
+    <!-- ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <div id="app-interface" style="display: none;">
+        <nav>
+            <h1>Real Estate System</h1>
+            <div class="nav-links">
+                <button onclick="showSection('properties')" class="active" id="nav-prop">Недвижимости</button>
+                <button onclick="showSection('tenants')" id="nav-tenant">Арендаторы</button>
+                <button onclick="showSection('contracts')" id="nav-cont">Сделки</button>
+                <button onclick="logout()">Выход</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Недвижимость -->
+            <div id="section-properties">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Объекты недвижимости</h2>
+                        <button class="btn btn-primary" onclick="openModal('properties')">+ Добавить</button>
+                    </div>
+                    <table id="table-properties">
+                        <thead><tr><th>ID</th><th>Название</th><th>Адрес</th><th>Тип</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Арендаторы -->
+            <div id="section-tenants" style="display:none;">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Арендаторы</h2>
+                        <button class="btn btn-primary" onclick="openModal('tenants')">+ Добавить</button>
+                    </div>
+                    <table id="table-tenants">
+                        <thead><tr><th>ID</th><th>ФИО</th><th>Телефон</th><th>Паспорт</th><th>Email</th><th>Действия</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Договоры -->
+            <div id="section-contracts" style="display:none;">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>Договоры</h2>
+                        <button class="btn btn-primary" onclick="openModal('contracts')">+ Новый договор</button>
+                    </div>
+                    <table id="table-contracts">
+                        <thead><tr><th>№</th><th>Объект</th><th>Арендатор</th><th>Период</th><th>Ставка</th><th>ИТОГО</th><th>Статус</th><th>Действия</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div id="modal-form" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Заголовок</h3>
+
+            <!-- ФОРМА ОБЪЕКТОВ -->
+            <div id="form-property" style="display:none;">
+                <div class="form-group"><label>Название</label><input type="text" id="p-name"></div>
+                <div class="form-group"><label>Адрес</label><input type="text" id="p-address"></div>
+                <div class="form-group"><label>Тип</label>
+                    <select id="p-type">
+                        <option value="flat">Квартира</option>
+                        <option value="house">Дом</option>
+                        <option value="office">Офис</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Цена (руб)</label><input type="number" id="p-price"></div>
+                <div class="form-group"><label>Площадь (м²)</label><input type="number" id="p-area"></div>
+            </div>
+
+            <!-- ФОРМА АРЕНДАТОРОВ -->
+            <div id="form-tenant" style="display:none;">
+                <div class="form-group"><label>ФИО</label><input type="text" id="t-name"></div>
+                <div class="form-group"><label>Телефон</label><input type="text" id="t-phone"></div>
+                <div class="form-group"><label>Паспорт</label><input type="text" id="t-passport"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="t-email"></div>
+            </div>
+
+            <!-- ФОРМА ДОГОВОРОВ -->
+            <div id="form-contract" style="display:none;">
+                <div class="form-group"><label>Номер договора</label><input type="text" id="c-number"></div>
+                <div class="form-group"><label>ID Объекта</label><input type="number" id="c-prop-id"></div>
+                <div class="form-group"><label>ID Арендатора</label><input type="number" id="c-tenant-id"></div>
+                <div class="form-group"><label>Дата начала</label><input type="date" id="c-start"></div>
+                <div class="form-group"><label>Дата окончания</label><input type="date" id="c-end"></div>
+                <div class="form-group"><label>Ежемесячная оплата</label><input type="number" id="c-payment" oninput="calculateContractTotal()"></div>
+
+                <div id="calc-preview" style="margin: 10px 0; padding: 10px; background: #e8f4fd; border-radius: 4px; display: none;">
+                    <strong>Предварительный итог:</strong> <span id="calc-result">0</span> руб.
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn" style="background:#ccc" onclick="closeModal()">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="submitForm()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- СКРИПТЫ -->
+    <script>
+        const API_URL = "http://127.0.0.1:8001/api/v1";
+        let TOKEN = localStorage.getItem('token');
+        let currentType = '';
+
+        // --- ВХОД / РЕГИСТРАЦИЯ ---
+        function showRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+        function showLogin() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        async function register() {
+            const u = document.getElementById('reg-username').value;
+            const e = document.getElementById('reg-email').value;
+            const p = document.getElementById('reg-password').value;
+            if(!u || !e || !p) return alert("Заполни все поля");
+
+            try {
+                const res = await fetch(`${API_URL}/users/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, email: e, password: p})
+                });
+                if (res.ok) await loginDirect(u, p);
+                else document.getElementById('reg-error').innerText = (await res.json()).detail || "Ошибка";
+            } catch (err) { alert("Ошибка сети"); }
+        }
+
+        async function login() {
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+            await loginDirect(u, p);
+        }
+
+        async function loginDirect(u, p) {
+            try {
+                const res = await fetch(`${API_URL}/users/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    TOKEN = data.access_token;
+                    localStorage.setItem('token', TOKEN);
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('app-interface').style.display = 'block';
+                    loadSection('properties');
+                } else {
+                    const errId = document.getElementById('login-form').style.display === 'none' ? 'reg-error' : 'login-error';
+                    document.getElementById(errId).innerText = data.detail || "Ошибка входа";
+                }
+            } catch (e) { console.error(e); alert("Ошибка соединения"); }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            location.reload();
+        }
+
+        // --- НАВИГАЦИЯ ---
+        function showSection(section) {
+            document.querySelectorAll('[id^="section-"]').forEach(el => el.style.display = 'none');
+            document.getElementById('section-' + section).style.display = 'block';
+
+            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+            const navId = section === 'properties' ? 'nav-prop' : section === 'tenants' ? 'nav-tenant' : 'nav-cont';
+            document.getElementById(navId).classList.add('active');
+
+            loadSection(section);
+        }
+
+        async function loadSection(type) {
+            const tbody = document.getElementById('table-' + type).querySelector('tbody');
+            tbody.innerHTML = '<tr><td colspan="10">Загрузка...</td></tr>';
+
+            try {
+                let url = `${API_URL}/${type}/`;
+
+                const res = await fetch(url, {
+                    headers: {'Authorization': `Bearer ${TOKEN}`}
+                });
+                const data = await res.json();
+
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = getRowHtml(type, item);
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="10">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        function getRowHtml(type, item) {
+            if (type === 'properties') {
+                const status = item.is_available
+                    ? '<span class="badge badge-success">Свободен</span>'
+                    : '<span class="badge badge-danger">Занят</span>';
+                return `<td>${item.id}</td><td>${item.name}</td><td>${item.address}</td><td>${item.property_type}</td><td>${item.price} ₽</td><td>${status}</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem('properties', ${item.id})">Удалить</button></td>`;
+            } else if (type === 'tenants') {
+                return `<td>${item.id}</td><td>${item.name}</td><td>${item.phone}</td><td>${item.passport}</td><td>${item.email || '-'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem('tenants', ${item.id})">Удалить</button></td>`;
+            } else if (type === 'contracts') {
+                const start = new Date(item.start_date);
+                const end = new Date(item.end_date);
+                const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                const total = item.monthly_payment * (months > 0 ? months : 1);
+
+                let badge = '<span class="badge badge-warning">Новый</span>';
+                if(item.status === 'active') badge = '<span class="badge badge-success">Активен</span>';
+
+                return `<td>${item.contract_number}</td><td>${item.property_id}</td><td>${item.tenant_id}</td><td>${item.start_date} - ${item.end_date}</td><td>${item.monthly_payment} ₽</td><td style="font-weight:bold; color:var(--accent)">${total} ₽</td><td>${badge}</td><td><button class="btn btn-danger btn-sm" onclick="deleteItem('contracts', ${item.id})">Удалить</button></td>`;
+            }
+        }
+
+        // --- МОДАЛЬНОЕ ОКНО ---
+        function openModal(type) {
+            currentType = type; // ИСПРАВЛЕНО: теперь используем множественное число
+            document.getElementById('modal-form').style.display = 'flex';
+
+            // Скрываем все формы
+            document.getElementById('form-property').style.display = 'none';
+            document.getElementById('form-tenant').style.display = 'none';
+            document.getElementById('form-contract').style.display = 'none';
+            document.getElementById('calc-preview').style.display = 'none';
+
+            // Обновляем заголовок
+            if (type === 'properties') {
+                document.getElementById('modal-title').innerText = 'Добавить объект';
+                document.getElementById('form-property').style.display = 'block';
+                clearInputs('p-name', 'p-address', 'p-price', 'p-area');
+            } else if (type === 'tenants') {
+                document.getElementById('modal-title').innerText = 'Добавить арендатора';
+                document.getElementById('form-tenant').style.display = 'block';
+                clearInputs('t-name', 't-phone', 't-passport', 't-email');
+            } else if (type === 'contracts') {
+                document.getElementById('modal-title').innerText = 'Новый договор';
+                document.getElementById('form-contract').style.display = 'block';
+                clearInputs('c-number', 'c-prop-id', 'c-tenant-id', 'c-start', 'c-end', 'c-payment');
+            }
+        }
+
+        function clearInputs(...ids) {
+            ids.forEach(id => document.getElementById(id).value = '');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-form').style.display = 'none';
+        }
+
+        // --- ЛОГИКА ---
+        function calculateContractTotal() {
+            const price = parseFloat(document.getElementById('c-payment').value) || 0;
+            const startVal = document.getElementById('c-start').value;
+            const endVal = document.getElementById('c-end').value;
+
+            if (price && startVal && endVal) {
+                const start = new Date(startVal);
+                const end = new Date(endVal);
+                if (end > start) {
+                    const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                    const total = price * (months > 0 ? months : 1);
+                    document.getElementById('calc-result').innerText = total.toLocaleString();
+                    document.getElementById('calc-preview').style.display = 'block';
+                    return;
+                }
+            }
+            document.getElementById('calc-preview').style.display = 'none';
+        }
+
+        async function submitForm() {
+            let data = {};
+            let url = `${API_URL}/${currentType}/`; // ИСПРАВЛЕНО: используем множественное число
+
+            if (currentType === 'properties') {
+                data = {
+                    name: document.getElementById('p-name').value,
+                    address: document.getElementById('p-address').value,
+                    property_type: document.getElementById('p-type').value,
+                    price: parseFloat(document.getElementById('p-price').value),
+                    area: parseFloat(document.getElementById('p-area').value)
+                };
+            } else if (currentType === 'tenants') {
+                data = {
+                    name: document.getElementById('t-name').value,
+                    phone: document.getElementById('t-phone').value,
+                    passport: document.getElementById('t-passport').value,
+                    email: document.getElementById('t-email').value
+                };
+            } else if (currentType === 'contracts') {
+                data = {
+                    contract_number: document.getElementById('c-number').value,
+                    property_id: parseInt(document.getElementById('c-prop-id').value),
+                    tenant_id: parseInt(document.getElementById('c-tenant-id').value),
+                    start_date: document.getElementById('c-start').value,
+                    end_date: document.getElementById('c-end').value,
+                    monthly_payment: parseFloat(document.getElementById('c-payment').value)
+                };
+            }
+
+            try {
+                // ПРОВЕРКА: Выводим токен в консоль перед отправкой
+                if (!TOKEN) {
+                    alert("Ошибка: Токен отсутствует! Войдите заново.");
+                    return;
+                }
+                console.log("Отправляю запрос на:", url);
+                console.log("Токен (первые 20 символов):", TOKEN.substring(0, 20) + "...");
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadSection(currentType);
+                } else {
+                    // Если ошибка 401, выводим подробности
+                    if (res.status === 401) {
+                        console.error("Ошибка 401: Не авторизован. Проверьте токен.");
+                        alert("Сессия истекла или токен неверен. Попробуйте выйти и войти снова.");
+                        logout();
+                        return;
+                    }
+
+                    const errData = await res.json();
+                    alert('Ошибка: ' + (errData.detail || 'Неизвестная ошибка'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка сети');
+            }
+        }
+
+        async function deleteItem(type, id) {
+            if (!confirm('Удалить?')) return;
+            try {
+                await fetch(`${API_URL}/${type}/${id}`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': `Bearer ${TOKEN}`}
+                });
+                loadSection(type);
+            } catch (e) {
+                alert('Ошибка удаления');
+            }
+        }
+
+        // --- СТАРТ ---
+        if (TOKEN) {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'block';
+            loadSection('properties');
+        }
+    </script>
+</body>
+</html>
