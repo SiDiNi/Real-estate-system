@@ -1,8 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
-
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,21 +28,45 @@ app = FastAPI(lifespan=lifespan)
 app.add_exception_handler(CustomException, custom_exception_handler)
 app.add_exception_handler(RequestValidationError, custom_validator_handler)
 
+app.include_router(contracts.router, prefix="/api/v1/contracts", tags=["Contracts"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(properties.router, prefix="/api/v1/properties", tags=["Properties"])
 app.include_router(tenants.router, prefix="/api/v1/tenants", tags=["Tenants"])
-app.include_router(contracts.router, prefix="/api/v1/contracts", tags=["Contracts"])
 
-app.mount(
-    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
-)
+# Настройка статики
+static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-templates = Jinja2Templates(directory="app/static")
+# Настройка шаблонов
+templates = Jinja2Templates(directory=str(static_dir))
 
 
 @app.exception_handler(Exception)
 async def global_validator(_request: Request, _exc: Exception):
     return JSONResponse(status_code=500, content={"error": "Сервер упал"})
+
+
+@app.get("/", response_class=Response)
+async def read_root():
+    """Отдает главную страницу index.html"""
+    try:
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            with open(index_path, "r", encoding="utf-8") as f:
+                return Response(content=f.read(), media_type="text/html")
+        else:
+            return Response(
+                content="<h1>ОШИБКА: Файл static/index.html не найден!</h1>",
+                media_type="text/html",
+                status_code=404
+            )
+    except Exception as e:
+        logger.error(f"Error serving index.html: {e}")
+        return Response(
+            content="<h1>Ошибка сервера при загрузке главной страницы</h1>",
+            media_type="text/html",
+            status_code=500
+        )
 
 
 if __name__ == "__main__":

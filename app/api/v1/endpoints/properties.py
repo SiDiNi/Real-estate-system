@@ -6,7 +6,6 @@ from app.crud.crud_property import property_crud
 from app.models.models import User
 from app.schemas.schemas import PropertyCreate, PropertyResponse, PropertyUpdate
 
-
 router = APIRouter()
 
 

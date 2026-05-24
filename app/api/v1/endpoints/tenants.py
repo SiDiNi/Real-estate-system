@@ -6,7 +6,6 @@ from app.crud.crud_tenant import tenant_crud
 from app.models.models import User
 from app.schemas.schemas import TenantCreate, TenantResponse, TenantUpdate
 
-
 router = APIRouter()
 
 

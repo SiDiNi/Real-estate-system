@@ -8,6 +8,10 @@ venv\Scripts\activate
 
 2. Настрой pre-commit
 pip install pre-commit black isort flake8
+активация в терминале:
+black .
+flake8 .
+isort .
 
 3. Установи зависимости
 pip install -r requirements.txt

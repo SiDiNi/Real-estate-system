@@ -12,10 +12,12 @@ from app.core.config import config as app_config
 # Например: from app.database.models import Base, User, Property, Contract, Payment
 # Важно: импортируй все модели, чтобы Alembic их "увидел"
 from app.database.db import Base  # Твой declarative_base
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 from app.models import (  # Импортируем модуль с моделями, чтобы они зарегистрировались
     models,
 )
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -12,7 +12,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship
 
-
 Base = declarative_base()
 
 
@@ -42,6 +41,8 @@ class Property(Base):  # Объекты недвижимости
     property_type = Column(String)
     area = Column(Float)
     price = Column(Float)
+    rooms_count = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
     is_available = Column(Boolean, default=True)
 
     # Связи

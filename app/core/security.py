@@ -9,7 +9,6 @@ from passlib.context import CryptContext
 from app.core.config import config
 from app.core.exceptions import CustomException
 
-
 oAuth2p_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 SECRET = config.api.secret_key

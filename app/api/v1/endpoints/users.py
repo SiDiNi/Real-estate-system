@@ -7,7 +7,6 @@ from app.crud.crud_user import user_crud
 from app.models.models import User
 from app.schemas.schemas import TokenResponse, UserCreate, UserLogin, UserResponse
 
-
 router = APIRouter()
 
 

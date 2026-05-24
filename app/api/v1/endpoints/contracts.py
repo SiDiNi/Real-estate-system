@@ -8,7 +8,6 @@ from app.crud.crud_tenant import tenant_crud
 from app.models.models import Contract, User
 from app.schemas.schemas import ContractCreate, ContractResponse, ContractUpdate
 
-
 router = APIRouter()
 
 
