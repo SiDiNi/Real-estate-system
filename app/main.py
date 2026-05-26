@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from alembic.config import Config
+#from alembic.config import Config
 
 from app.api.v1.endpoints import contracts, properties, tenants, users
 from app.core.exceptions import (
@@ -22,8 +22,8 @@ async def lifespan(_app):
     logger.info("Starting app...")
 
     try:
-        alembic_cfg = Config("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+        #alembic_cfg = Config("alembic.ini")
+        #command.upgrade(alembic_cfg, "head")
         logger.info("Migrations applied")
     except Exception as e:
         logger.error(f"Migration error: {e}")
