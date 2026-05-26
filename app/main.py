@@ -17,11 +17,17 @@ from app.core.logging_config import logger
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
-    logger.info("connection")
-    yield
-    logger.info("disconnection")
+async def lifespan(_app):
+    logger.info("Starting app...")
 
+    try:
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Migrations applied")
+    except Exception as e:
+        logger.error(f"Migration error: {e}")
+
+    yield
 
 app = FastAPI(lifespan=lifespan)
 
