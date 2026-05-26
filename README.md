@@ -24,6 +24,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
 Или можно запустить F5 в файле app/main.py
 Сервер запустится на: http://127.0.0.1:8001
+или же на сайте real-estate-system-m29j.onrender.com
 
 🗄️ Миграции (Alembic)
 # Создать миграцию после изменения моделей
