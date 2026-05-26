@@ -44,8 +44,10 @@ target_metadata = Base.metadata
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("❌ Не найдена переменная DATABASE_URL в файле .env")
+    raise ValueError("DATABASE_URL not found")
 
+# КРИТИЧНО
+SYNC_DATABASE_URL = DATABASE_URL.replace("+asyncpg", "")
 # -----------------------------------------------------------------------------
 # 4. ФУНКЦИИ MIGRATIONS
 # -----------------------------------------------------------------------------
@@ -76,9 +78,9 @@ def run_migrations_online() -> None:
     from sqlalchemy import create_engine
 
     connectable = create_engine(
-        DATABASE_URL,
-        poolclass=pool.NullPool,
-    )
+    SYNC_DATABASE_URL,
+    poolclass=pool.NullPool,
+)
 
     with connectable.connect() as connection:
         context.configure(
