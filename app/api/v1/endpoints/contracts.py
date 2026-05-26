@@ -13,14 +13,11 @@ router = APIRouter()
 
 @router.post("/", response_model=ContractResponse, status_code=status.HTTP_201_CREATED)
 async def create_contract(
-    contract_in: ContractCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        contract_in: ContractCreate,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ):
-    """
-    Создать новый договор с расчётом итоговой суммы.
-    """
-    # Проверки
+    # 1. Проверяем, существуют ли арендатор и объект
     prop = await property_crud.get(db, property_id=contract_in.property_id)
     tenant = await tenant_crud.get(db, tenant_id=contract_in.tenant_id)
 
@@ -29,10 +26,24 @@ async def create_contract(
     if not tenant:
         raise HTTPException(status_code=404, detail="Арендатор не найден")
 
-    db_obj = Contract(**contract_in.dict())
+    # 🔥 2. ПРОВЕРКА: Свободен ли объект?
+    if not prop.is_available:
+        raise HTTPException(status_code=400, detail="Этот объект уже занят!")
+
+    # 3. Создаем договор
+    # Используем model_dump() для Pydantic v2
+    db_obj = Contract(**contract_in.model_dump())
     db.add(db_obj)
+
+    # 🔥 4. МЕНЯЕМ СТАТУС ОБЪЕКТА НА "ЗАНЯТ"
+    prop.is_available = False
+
+    # Сохраняем изменения в БД
     await db.commit()
-    await db.refresh(db_obj)
+    await db.refresh(db_obj)  # Обновляем объект договора (чтобы вернуть ID и даты)
+
+    # Опционально: можно обновить и prop, чтобы фронт видел актуальный статус сразу
+    await db.refresh(prop)
 
     return db_obj
 

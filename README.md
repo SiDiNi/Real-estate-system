@@ -8,7 +8,7 @@ venv\Scripts\activate
 
 2. Настрой pre-commit
 pip install pre-commit black isort flake8
-активация в терминале:
+активация в терминале(если нужно):
 black .
 flake8 .
 isort .
@@ -22,6 +22,7 @@ pip install -r requirements.txt
 
 5. Запусти сервер
 uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+Или можно запустить F5 в файле app/main.py
 Сервер запустится на: http://127.0.0.1:8001
 
 🗄️ Миграции (Alembic)
